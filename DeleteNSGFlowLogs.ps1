@@ -91,6 +91,7 @@ function Delete-NSGFlowLogs()
     $flList =  Get-AzNetworkWatcherFlowLog -Location $region
     $disabledNSGFlList =  Filter-DisabledNSGFlowLogs $flList
     $proceed = Read-ValuesIgnoringPreviousEntries("Proceed with deletion of flowlogs?(y/n)")
+    $proceed = $proceed.ToLower()
 
     if ($proceed -eq 'y')
     {
@@ -110,18 +111,18 @@ function Delete-NSGFlowLogs()
 
 try
 {
-	$configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to scope selecting config file:")
+	$configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to select config file:")
 	$subIdRegion = Get-Content -Path $configPath | ConvertFrom-Json  -AsHashtable -ErrorAction SilentlyContinue
 }
 catch
 {
-	Write-Host "Config file in incorrect json format please format it correctly" -ForegroundColor Red
+	Write-Host "Config file is in incorrect json format, please format it correctly" -ForegroundColor Red
 	return
 }
 
 if ($null -eq $subIdRegion)
 {
-	Write-Host "Config file in incorrect json format please format it correctly" -ForegroundColor Red
+	Write-Host "Config file is in incorrect json format, please format it correctly" -ForegroundColor Red
 	return
 }
 
