@@ -1,3 +1,6 @@
+#// Copyright (c) Microsoft Corporation.
+#// Licensed under the MIT license.
+
 #region Global
 
 $configPath = '.\RegionSubscriptionConfig.json'
