@@ -264,12 +264,12 @@ function Compare-FlowLogSetting($expected, $found, $printLogs)
         return $false
     }
 
-    if ($null -eq $expected.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration -and $null -eq $found.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration)
+    if ((-not $expected.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.workspaceId) -and (-not $found.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.workspaceId))
     {
         return $true
     }
 
-    if ($null -eq $expected.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration -or $null -eq $found.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration)
+    if ((-not $expected.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.workspaceId) -or (-not $found.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.workspaceId))
     {
         if ($printLogs)
         {
@@ -297,15 +297,21 @@ $compareFlowLogSettingStr = ${function:Compare-FlowLogSetting}.ToString()
 
 function Compare-CreatedFlowLogSettings($expected, $found, $taregtId)
 {
+    if ($null -eq $found)
+    {
+        Write-Host "Created resource not found, check if some error during creation" -ForeGroundColor Red
+        return $false
+    }
+
     if ($found.ProvisioningState -ne 'Succeeded')
     {
-        Write-Host "Unexpected provisioning state:" $found.ProvisioningState ", please contact harshacs@microsoft.com" -ForeGroundColor Red
+        Write-Host "Unexpected provisioning state:" $found.ProvisioningState -ForeGroundColor Red
         return $false
     }
 
     if ($found.TargetResourceId -ne $taregtId)
     {
-        Write-Host "Incorrect targetId. Expected:" $taregtId "Found:" $found.TargetResourceId ", please contact harshacs@microsoft.com" -ForeGroundColor Red
+        Write-Host "Incorrect targetId. Expected:" $taregtId "Found:" $found.TargetResourceId -ForeGroundColor Red
         return $false
     }
 
@@ -313,7 +319,7 @@ function Compare-CreatedFlowLogSettings($expected, $found, $taregtId)
 
     if ($isSettingsSame -eq $false)
     {
-        Write-Host "Incorrect settings of flowlog , please contact harshacs@microsoft.com" -ForeGroundColor Red
+        Write-Host "Incorrect settings of flowlog" -ForeGroundColor Red
         Print-FlowLog $expected
         Print-FlowLog $found
         return $false
@@ -349,7 +355,7 @@ function Create-FlowLog($targetId, $flSettings, $createdVnetFlowlogs, $targetEta
         $flName = $flName.Substring(0, [math]::Min(80, $flName.Length)) #truncating flowlog to size 80 as resources can have name of maximum size 80
     }
 
-    if($null -eq $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration)
+    if (($null -eq $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration) -or (-not $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.WorkspaceResourceId))
     {
         Set-AzNetworkWatcherFlowLog -Location $flSettings.Location -Name $flName -TargetResourceId $targetId -StorageId $flSettings.StorageId -Enabled $flSettings.Enabled -EnableRetention $flSettings.RetentionPolicy.Enabled -RetentionPolicyDays $flSettings.RetentionPolicy.Days -FormatType $flSettings.Format.Type -FormatVersion $flSettings.Format.Version -Force
         Start-Sleep -Seconds 10
@@ -696,7 +702,7 @@ function Disable-FlowLogs($disabledFlList)
         {
             $flSettings.Enabled = $false
 
-            if($null -eq $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration)
+            if (($null -eq $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration) -or (-not $flSettings.FlowAnalyticsConfiguration.NetworkWatcherFlowAnalyticsConfiguration.WorkspaceResourceId))
             {
                 Set-AzNetworkWatcherFlowLog -Location $flSettings.Location -Name $flSettings.Name -TargetResourceId $flSettings.TargetResourceId -StorageId $flSettings.StorageId -Enabled $false -EnableRetention $flSettings.RetentionPolicy.Enabled -RetentionPolicyDays $flSettings.RetentionPolicy.Days -FormatType $flSettings.Format.Type -FormatVersion $flSettings.Format.Version -Force
 
@@ -1193,6 +1199,13 @@ function Populate-Info($flList, $processList, $nsgNicFlMap, $nsgSubnetFlMap, $pa
                 # not synchonizing access to shared maps targetEtagMap, nsgSubnetFlMap, nsgNicFlMap as 1-1 mapping
                 ($using:targetEtagMap)[$fl.TargetResourceId] = $nsg.Etag
 
+                if ($nsg.Subnets.Count -eq 0 -and $nsg.NetworkInterfaces.Count -eq 0)
+                {
+                    Write-Host "No subnet or nic attached to NSG" $targetResource.Id "hence moving it to disbale NSG list"
+                    ($using:disabledFlList)[$targetResource.Id] = $fl
+                    break
+                }
+
                 foreach($subnet in $nsg.Subnets)
                 {
                     ($using:nsgSubnetFlMap)[$subnet.Id] = $fl
@@ -1634,7 +1647,6 @@ function Check-ReRunOfAnalysisRequired($flIdToEtagTargetIdMap, $targetEtagMap)
 {
     Write-Host "$(Get-Date) Checking if re-running analysis is required" -ForeGroundColor Blue
     $latestFlList = Get-AzNetworkWatcherFlowLog -Location $region
-    $latestFlList = Filter-FlowLogs $latestFlList
 
     if ($flIdToEtagTargetIdMap.Count -ne $latestFlList.Count)
     {
@@ -1698,6 +1710,7 @@ function Run-Analysis()
 
     Write-Host "In aggregation mode migration (recommended)" $createFlowlogTragetList.Count "vnet flowlog will be created" -ForeGroundColor Magenta
     Write-Host "In non-aggregation mode migration" $flowlogCount.count "vnet flowlog will be created" -ForeGroundColor Magenta
+    Write-Host "Number of NGS flowlogs to be disabled:" $disabledFlList.count -ForeGroundColor Magenta
     Write-Host "You can view the above info in html file" $reportFileName "located in the same folder as script"
 
     $perms = Read-ValuesIgnoringPreviousEntries(@"
@@ -1837,6 +1850,12 @@ if ($perms -eq '1' -or $perms -eq '2')
         else
         {
             $numOfThreads = [int]$numOfThreadsStr
+        }
+
+        if ($numOfThreads -le 0)
+        {
+            Write-Host "Number of threads can't be negative or zero, quitting!" -ForeGroundColor Red
+            return
         }
 
         Write-Host "Using" $numOfThreads " number of threads"
