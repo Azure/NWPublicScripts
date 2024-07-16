@@ -1,0 +1,1 @@
+{"attributes":{"fieldAttrs":"{}","fieldFormatMap":"{}","fields":"[]","name":"vnet-flow-logs","runtimeFieldMap":"{}","sourceFilters":"[]","timeFieldName":"@timestamp","title":"vnet-flow-logs","typeMeta":"{}"},"id":"e8bf360b-27ed-4c68-8528-c1a540a247ba","managed":false,"references":[],"type":"index-pattern"}

@@ -1,0 +1,30 @@
+[
+  {
+    "_id": "a2401de0-fabe-11e6-8d9a-05a5975ee573",
+    "_type": "search",
+    "_source": {
+      "title": "Flow Tuples",
+      "description": "",
+      "hits": 0,
+      "columns": [
+        "NetworkSecurityGroup",
+        "records.properties.flows.rule",
+        "srcIp",
+        "destIp",
+        "srcPort",
+        "destPort",
+        "protocol",
+        "trafficflow",
+        "traffic"
+      ],
+      "sort": [
+        "@timestamp",
+        "desc"
+      ],
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"nsg-flow-logs\",\"filter\":[],\"highlight\":{\"pre_tags\":[\"@kibana-highlighted-field@\"],\"post_tags\":[\"@/kibana-highlighted-field@\"],\"fields\":{\"*\":{}},\"require_field_match\":false,\"fragment_size\":2147483647},\"query\":{\"query_string\":{\"query\":\"*\",\"analyze_wildcard\":true}}}"
+      }
+    }
+  }
+]
