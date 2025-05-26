@@ -1,5 +1,6 @@
 #// Copyright (c) Microsoft Corporation.
 #// Licensed under the MIT license.
+#Requires -Version 7.2
 
 #region Globals
 
