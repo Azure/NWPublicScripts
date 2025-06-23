@@ -1841,8 +1841,9 @@ if ($perms -eq '1' -or $perms -eq '2')
 
     try
     {
-        $configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to scope selecting config file:")
-        $numOfThreadsStr = Read-Host("Please enter the number of threads you would like to use, press enter for using default value of 16:")
+        $configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to scope selecting config file: ")
+        $numOfThreadsStr = Read-Host("Please enter the number of threads you would like to use, press enter for using default value of 16: ")
+        $environment = Read-Host("Please enter the environment containing your azure account, press enter for using default value of AzureCloud in public clouds: ")
 
         if ($numOfThreadsStr -eq '')
         {
@@ -1857,6 +1858,11 @@ if ($perms -eq '1' -or $perms -eq '2')
         {
             Write-Host "Number of threads can't be negative or zero, quitting!" -ForeGroundColor Red
             return
+        }
+
+	if ($environment -eq '')
+        {
+            $environment = 'AzureCloud'
         }
 
         Write-Host "Using" $numOfThreads " number of threads"
@@ -1874,7 +1880,7 @@ if ($perms -eq '1' -or $perms -eq '2')
         return
     }
 
-    Connect-AzAccount
+    Connect-AzAccount -Environment $environment
     $mutex = New-Object Threading.Mutex($false, "MyMutex")
 
     foreach($subId in $subIdRegion.Keys)
