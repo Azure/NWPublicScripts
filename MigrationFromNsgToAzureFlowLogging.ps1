@@ -1841,9 +1841,9 @@ if ($perms -eq '1' -or $perms -eq '2')
 
     try
     {
-        $configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to scope selecting config file:")
-        $numOfThreadsStr = Read-Host("Please enter the number of threads you would like to use, press enter for using default value of 16:")
-        $environment = Read-Host("Please enter the environment containing your azure account, press enter for using default value of AzureCloud in public clouds:")
+        $configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to scope selecting config file: ")
+        $numOfThreadsStr = Read-Host("Please enter the number of threads you would like to use, press enter for using default value of 16: ")
+        $environment = Read-Host("Please enter the environment containing your azure account, press enter for using default value of AzureCloud in public clouds: ")
 
         if ($numOfThreadsStr -eq '')
         {
