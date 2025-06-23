@@ -115,9 +115,9 @@ function Delete-NSGFlowLogs()
 
 try
 {
-	$configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to select config file:")
+	$configPath = Read-ValuesIgnoringPreviousEntries("Please enter the path to select config file: ")
 	$subIdRegion = Get-Content -Path $configPath | ConvertFrom-Json  -AsHashtable -ErrorAction SilentlyContinue
-        $environment = Read-Host("Please enter the environment containing your azure account, press enter for using default value of AzureCloud in public clouds:")
+        $environment = Read-Host("Please enter the environment containing your azure account, press enter for using default value of AzureCloud in public clouds: ")
 
         if ($environment -eq '')
         {
